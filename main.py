@@ -254,7 +254,7 @@ from machine import Pin
 
 scl_pin_id = 23
 sda_pin_id = 22
-i2c = machine.I2C(scl = machine.Pin(scl_pin_id),
+i2c = machine.SoftI2C(scl = machine.Pin(scl_pin_id),
                     sda = machine.Pin(sda_pin_id), freq=10000)
 
 bme = BME280(i2c=i2c)
@@ -290,10 +290,11 @@ def _submit_wrapper(urls, job_name, metric_name, metric_value, dimensions):
         print("data: " + data)
         requests.post(url__,
                       data=data, headers=headers)
-
-while True:
+try:
     do_connect()
     _submit_wrapper(["mschaffenroth.de:9091"], "weather", "temperature", bme.values[0].replace("C", ""), dimensions={})
     _submit_wrapper(["mschaffenroth.de:9091"], "weather", "air_pressure", bme.values[1].replace("hPa", ""), dimensions={})
     _submit_wrapper(["mschaffenroth.de:9091"], "weather", "humidity", bme.values[2].replace("%", ""), dimensions={})
-    machine.deepsleep(6000)
+except OSError as e:
+    print("Error", str(e))
+machine.deepsleep(6000)
