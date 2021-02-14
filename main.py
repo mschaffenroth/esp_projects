@@ -290,12 +290,14 @@ def _submit_wrapper(urls, job_name, metric_name, metric_value, dimensions):
         print("data: " + data)
         requests.post(url__,
                       data=data, headers=headers)
-
-do_connect()
-_submit_wrapper(["mschaffenroth.de:9091"], "weather", "temperature", bme.values[0].replace("C", ""), dimensions={})
-_submit_wrapper(["mschaffenroth.de:9091"], "weather", "air_pressure", bme.values[1].replace("hPa", ""), dimensions={})
-_submit_wrapper(["mschaffenroth.de:9091"], "weather", "humidity", bme.values[2].replace("%", ""), dimensions={})
-import gc
-gc.collect()
-print(gc.mem_free())
+try:
+    do_connect()
+    _submit_wrapper(["mschaffenroth.de:9091"], "weather", "temperature", bme.values[0].replace("C", ""), dimensions={})
+    _submit_wrapper(["mschaffenroth.de:9091"], "weather", "air_pressure", bme.values[1].replace("hPa", ""), dimensions={})
+    _submit_wrapper(["mschaffenroth.de:9091"], "weather", "humidity", bme.values[2].replace("%", ""), dimensions={})
+    import gc
+    gc.collect()
+    print(gc.mem_free())
+except OSError as e:
+    print("Error", str(e))
 machine.deepsleep(6000)
