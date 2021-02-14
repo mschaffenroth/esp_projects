@@ -293,9 +293,10 @@ def _submit_wrapper(urls, job_name, metric_name, metric_value, dimensions):
                       data=data, headers=headers)
 try:
     do_connect()
-    _submit_wrapper(["mschaffenroth.de:9091"], "weather", "temperature", bme.values[0].replace("C", ""), dimensions={})
-    _submit_wrapper(["mschaffenroth.de:9091"], "weather", "air_pressure", bme.values[1].replace("hPa", ""), dimensions={})
-    _submit_wrapper(["mschaffenroth.de:9091"], "weather", "humidity", bme.values[2].replace("%", ""), dimensions={})
+    wlan=open("wlan.txt").read().split(",")
+    _submit_wrapper([wlan[2]], "weather", "temperature", bme.values[0].replace("C", ""), dimensions={})
+    _submit_wrapper([wlan[2]], "weather", "air_pressure", bme.values[1].replace("hPa", ""), dimensions={})
+    _submit_wrapper([wlan[2]], "weather", "humidity", bme.values[2].replace("%", ""), dimensions={})
     import gc
     gc.collect()
     print(gc.mem_free())
