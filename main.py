@@ -268,7 +268,8 @@ def do_connect():
     nic.active(True)
     if not nic.isconnected():
         print('connecting to network...')
-        nic.connect('WLAN-923C69', '6996753681495051')
+        wlan=open("wlan.txt").read().split(",")
+        nic.connect(wlan[0], wlan[1])
         while not nic.isconnected():
             pass
         print("connected")
