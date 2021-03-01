@@ -251,21 +251,4 @@ class BME280:
         return ("{}C".format(t / 100), "{:.02f}hPa".format(p/100),
                 "{:.02f}%".format(h))
 
-#
-# this script assumes the default connection of the I2C bus
-# On pycom devices that is P9 = SDA, P10 = scl
-#
-import machine
-from machine import Pin
-
-scl_pin_id = 23
-sda_pin_id = 22
-scl = machine.Pin(scl_pin_id)
-sda = machine.Pin(sda_pin_id)
-i2c = machine.I2C(scl=scl, sda=sda, freq=10000)
-
-bme = BME280(i2c=i2c, address=0x76)
-
-print(bme.values)
-
 
