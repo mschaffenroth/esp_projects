@@ -1,33 +1,8 @@
 from bme280_float import BME280
+import machine
+from wlan import do_connect
 SLEEP_SECONDS=600
 SENDING_BATCH=1
-
-import machine
-def do_connect():
-    import network
-    # enable station interface and connect to WiFi access point
-    nic = network.WLAN(network.STA_IF)
-    nic.active(True)
-    if not nic.isconnected():
-        print('connecting to network...')
-        wlan=open("wlan.txt").read()[:-1].split(",")
-        print(wlan)
-        print(wlan[0])
-        print(wlan[1])
-        nic.connect(wlan[0], wlan[1])
-        i=0
-        TOO_MANY_RETRIES=10000
-        import utime
-        while not nic.isconnected() and i < TOO_MANY_RETRIES:
-           i+=1
-           utime.sleep_ms(1)
-        if i < TOO_MANY_RETRIES:
-           print("connected")
-        else:
-            print("connect failed!")
-        return wlan
-    return None
-    # now use sockets as usual
 
 
 import urequests as requests
@@ -60,7 +35,17 @@ def setup_i2c():
                             sda = sda, freq=10000)
         return i2c
 
-def send_batch(values):
+def measure_battery_level():
+    from machine import ADC
+    
+    p1 = machine.Pin(25, machine.Pin.OUT)
+    p1.value(1)
+    adc = ADC(machine.Pin(34))          # create ADC object on ADC pin
+    v=adc.read()                  # read value, 0-4095 across voltage range 0.0v - 1.0v
+    print("measure: ", v)
+    return v
+
+def send_batch(value, volt):
     # send sensor values if batch completed
  
     wlan = do_connect()
@@ -72,6 +57,7 @@ def send_batch(values):
         _send_to_prometheus([wlan[2]], "weather", "temperature", value[0], dimensions={}, time=rtc.datetime())
         _send_to_prometheus([wlan[2]], "weather", "air_pressure", value[1], time=rtc.datetime(), dimensions={})
         _send_to_prometheus([wlan[2]], "weather", "humidity", value[2], dimensions={}, time=rtc.datetime())
+        _send_to_prometheus([wlan[2]], "weather", "volt", volt, dimensions={}, time=rtc.datetime())
 
 def decode_memory():
    rtc = machine.RTC();
@@ -104,9 +90,14 @@ def calc_mean(values):
 
 while True:
     try:
+        volt=measure_battery_level()
         # After leaving deepsleep it may be necessary to un-hold the pin explicitly (e.g. if it is an output pin) 
         # See https://docs.micropython.org/en/latest/esp32/quickref.html#deep-sleep-mode
         p1 = machine.Pin(4, machine.Pin.OUT, None)
+        
+        # enable power for temperatuer sensor
+        p2 = machine.Pin(19, machine.Pin.OUT)
+        p2.value(1)
         
         values = decode_memory()
 
@@ -114,12 +105,18 @@ while True:
        
         bme = BME280(i2c=i2c)
         print(bme.values)
+        
+        # disable power for temperatuer sensor
+        #p2.value(0)
+
         cleaned_values = (bme.values[0].replace("C", ""), bme.values[1].replace("hPa", ""), bme.values[2].replace("%", ""))
         values.append(cleaned_values)
+        print("calc mean")
         value = calc_mean(values)
         print(len(values))
-        if len(values) == SENDING_BATCH:     
-           send_batch(value)
+        if len(values) == SENDING_BATCH:
+           print("send batch")
+           send_batch(value, volt)
            value = None
     
         encode_memory(value)

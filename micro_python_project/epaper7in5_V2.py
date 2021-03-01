@@ -162,48 +162,17 @@ class EPD:
         self.wait_until_idle()
 
     # draw the current frame memory
-    def display_frame2(self, f1, f2, f3, f4, w, h, e):
-        
+    def display_frame2(self, frame_buffer_file):
         self._command(DATA_START_TRANSMISSION_2)
-        
-        import gc
-        gc.collect()
-
-        buf = open(f1, "rb").read()
-        fb = frame_buffer.FrameBuffer(buf, w, h/2, e)
         for i in range(0, self.width * self.height // 8):
-            self._data(~frame_buffer[i])
-
-        import gc
-        gc.collect()
-
-        buf = open(f2, "rb").read()
-        fb = frame_buffer.FrameBuffer(buf, w, h/4, e)
-        for i in range(0, self.width * self.height // 8):
-            self._data(~frame_buffer[i])
-        self._command(DATA_START_TRANSMISSION_2)
-
-        import gc
-        gc.collect()
-
-        buf = open(f3, "rb").read()
-        fb = frame_buffer.FrameBuffer(buf, w, h/4, e)
-        for i in range(0, self.width * self.height // 8):
-            self._data(~frame_buffer[i])
-        self._command(DATA_START_TRANSMISSION_2)
-  
-        import gc
-        gc.collect()
-
-        buf = open(f4, "rb").read()
-        frame_buffer = framebuf.FrameBuffer(buf, w, h/4, e)
-        for i in range(0, self.width * self.height // 8):
-            self._data(~frame_buffer[i])
-        self._command(DATA_START_TRANSMISSION_2)
+            data = frame_buffer_file.read(10)
+            for entry in data:
+                self._data(~entry)
 
         self._command(DISPLAY_REFRESH)
         sleep_ms(100)
         self.wait_until_idle()
+
 
     def clear(self):
         self._command(DATA_START_TRANSMISSION_1)
